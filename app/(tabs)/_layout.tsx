@@ -27,16 +27,16 @@ export default function TabLayout() {
         }),
       }}>
       <Tabs.Screen
-        name="index"
+        name="ai-chat"
         options={{
-          title: 'Home',
+          title: 'AI Chat',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="live-guide"
         options={{
-          title: 'Explore',
+          title: 'Live Guide',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
         }}
       />
