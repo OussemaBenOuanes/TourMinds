@@ -1,110 +1,147 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Camera, CameraView } from 'expo-camera';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { PinchGestureHandler, PinchGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 
 export default function LiveGuideScreen() {
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const cameraRef = useRef<CameraView>(null);
+  const [zoom, setZoom] = useState(0);
+  const [cameraType, setCameraType] = useState<'back' | 'front'>('back');
+  const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const lastZoom = useRef(0);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  // Pinch gesture handler using react-native-gesture-handler
+  const onPinchEvent = (event: PinchGestureHandlerGestureEvent) => {
+    let newZoom = lastZoom.current * event.nativeEvent.scale;
+    newZoom = Math.max(0, Math.min(1, newZoom));
+    setZoom(newZoom);
+  };
+
+  const onPinchStateChange = (event: PinchGestureHandlerGestureEvent) => {
+    if (event.nativeEvent.state === State.BEGAN) {
+      lastZoom.current = zoom;
+    }
+  };
+
+  // Camera switcher between front and back
+  const handleSwitchCamera = () => {
+    setCameraType((prev) => (prev === 'back' ? 'front' : 'back'));
+  };
+
+  // Mute and pause handlers (placeholders)
+  const handleMute = () => setMuted((m) => !m);
+  const handlePause = () => setPaused((p) => !p);
+
+  if (hasPermission === null) {
+    return <View style={styles.container} />;
+  }
+  if (hasPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text>No access to camera</Text>
+      </View>
+    );
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Live Guide</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/ai-chat.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/live-guide.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'Urbanist' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <View style={styles.cameraBox}>
+        <PinchGestureHandler
+          onGestureEvent={onPinchEvent}
+          onHandlerStateChange={onPinchStateChange}
+        >
+          <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+            <CameraView
+              ref={cameraRef}
+              style={StyleSheet.absoluteFill}
+              facing={cameraType}
+              zoom={zoom}
+            />
+          </View>
+        </PinchGestureHandler>
+      </View>
+      {/* 3 circular buttons with icons */}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.circleButton} onPress={handleMute}>
+          <MaterialIcons name={muted ? 'mic-off' : 'mic'} size={28} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.circleButton} onPress={handlePause}>
+          <MaterialIcons name={paused ? 'play-arrow' : 'pause'} size={28} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.circleButton} onPress={handleSwitchCamera}>
+          <Ionicons name="camera-reverse" size={28} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#0F2E2D',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  titleContainer: {
+  cameraBox: {
+    // Make the rectangle smaller and responsive, especially on iOS
+    width: '90%',
+    aspectRatio: 3 / 4, // 3:4 portrait ratio
+    maxHeight: Platform.OS === 'ios' ? 380 : 480,
+    minHeight: 220,
+    borderRadius: 32,
+    backgroundColor: '#183C3A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    marginTop: Platform.OS === 'ios' ? 32 : 40,
+    marginBottom: Platform.OS === 'ios' ? 16 : 24,
+    flexShrink: 0,
+  },
+  cameraContent: {
+    width: 100,
+    height: 100,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: '#0F2E2D',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonRow: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: Platform.OS === 'ios' ? 32 : 16,
+    gap: 32,
+  },
+  circleButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#222a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 12,
+    elevation: 2,
+  },
+  switchText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
